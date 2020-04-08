@@ -13,7 +13,7 @@ t = np.linspace(0, 10, num=int(1001))
 # plt.show()
 
 
-f = gauss(x,10,t)
+#f = gauss(x,10,t)
 
 
 # --- Creates animation ---
@@ -30,7 +30,7 @@ def init():
     return line1, timeText1
 
 def animate(i):
-    line1.set_data(x, f[i,:])
+    line1.set_data(x, gauss(x,10,t[i],c=100))
     timeText1.set_text('Time = %2.1f' % (t[i]*1e9))
     return line1, timeText1
 
