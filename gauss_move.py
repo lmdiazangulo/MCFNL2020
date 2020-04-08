@@ -5,8 +5,8 @@ import matplotlib.animation as animation
 def gauss(x,sigma,t=0,c=1,A=1):
     return A*np.exp(-((x-c*t)/(sigma*np.sqrt(2)))**2)
 
-x = np.linspace(-5, 5, num=int(101))
-t = np.linspace(0, 10, num=int(101))
+x = np.linspace(-200, 200, num=int(1001))
+t = np.linspace(0, 10, num=int(1001))
 
 
 # plt.plot(x,gauss(x,10,50))
