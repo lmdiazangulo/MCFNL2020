@@ -1,0 +1,45 @@
+{
+    "format": "pyfdtd1d",
+    
+    "options": {
+        "finalTime": 500e-9,
+        "cfl": 1.0
+    },
+
+    "coordinates": [             #el [ ] indica que es un vector
+        0.0,
+        1.0,
+        0.5
+    ],
+
+    "elements": [
+        [0, 1],                     #Voy de 0.0 a 1.0 definido antes (línea)
+        [2, 2]                      #Voy de 0.5 a 0.5 (punto)
+    ],
+
+    "grid": {                        #Defino mi grid
+        "elemId": 0,                 #El nombre de mi grid
+        "steps": 0.005,
+        "bounds": ["pec", "pec"]
+    },
+        
+    "sources": [                                #Defino mi fuente
+        {
+            "type": "dipole",                   #Fuente de tipo dipolo
+            "direction": [0.0, 0.0, 1.0],
+            "magnitude": {
+                "type": "gaussian",
+                "gaussianDelay":  100e-9,
+                "gaussianSpread":  25e-9
+            },
+            "elemId": 1
+        }
+    ],
+ 
+    "probes": [
+        {
+            "name": "s1",
+            "elemId": 0                 #Sobre el elemento elemId=0 => mi grid
+        }
+    ]
+}
