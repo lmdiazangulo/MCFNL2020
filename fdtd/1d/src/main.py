@@ -7,7 +7,7 @@ import sys
 from fdtd.mesh import Mesh
 from fdtd.solver import Solver
 from fdtd.viewer import Animator
-
+from fdtd.comparison import AnalyticComp
 print("=== Python FDTD 1D")
 
 parser = argparse.ArgumentParser(description='Python FDTD 1D')
@@ -40,4 +40,5 @@ Animator(mesh, solver.getProbes()[0])
 print('--- Comparison with analytical solution')
 comparison=AnalyticComp(mesh, solver.getProbes()[0])
 err=comparison.L2Error()
+
 print('=== Program finished')
