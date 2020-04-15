@@ -83,10 +83,13 @@ class Solver:
         eNew[1:-1] = e[1:-1] + cE * (h[1:] - h[:-1])
         
         # Boundary conditions
-        for bound in self._mesh.bounds:
-            if bound == "pec":
-                eNew[ 0] = 0.0
-                eNew[-1] = 0.0
+        for lu in range(2):
+            if lu == 0:
+                pos = 0
+            else:
+                pos = -1
+            if self._mesh.bounds[lu] == "pec":
+                eNew[pos] = 0.0
             else:
                 raise ValueError("Unrecognized boundary type")
 

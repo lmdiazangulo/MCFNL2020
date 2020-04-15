@@ -18,7 +18,7 @@ class Animator:
         ax1.grid(color='gray', linestyle='--', linewidth=.2)
         ax1.set_xlabel('X coordinate [m]')
         ax1.set_ylabel('Field')
-        line1,    = ax1.plot([], [], '.', markersize=1)
+        line1,    = ax1.plot([], [], '-', markersize=1)
         timeText1 = ax1.text(0.02, 0.95, '', transform=ax1.transAxes)
 
         def init():
