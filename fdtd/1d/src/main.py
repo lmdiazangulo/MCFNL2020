@@ -1,3 +1,4 @@
+
 import json
 import argparse
 import os.path
@@ -30,6 +31,13 @@ print('--- Solving')
 solver.solve(data["options"]["finalTime"])
 
 print('--- Visualizing')
+#print(mesh)
+#print(solver.getProbes()[0])
+prb=solver.getProbes()[0]
 Animator(mesh, solver.getProbes()[0])
 
+#%%
+print('--- Comparison with analytical solution')
+comparison=AnalyticComp(mesh, solver.getProbes()[0])
+err=comparison.L2Error()
 print('=== Program finished')

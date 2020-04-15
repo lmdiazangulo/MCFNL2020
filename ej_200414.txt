@@ -1,0 +1,13 @@
+ejercicio para mañana y hacer pull request
+el post process, coger tiemopo y valores y comparar con el anal'itico (como la moving gaussian)
+dos formas:
+	*Pintar las dos a la vez (sin usar la visualización que hay alli hecha o si) en tiempo para ver como evoluciona
+	*Utilizar error L^2 = sum((fNumerico(xi,tn)-fAnalitico(xi,tn))^2)/N (se hace para cada paso temporal, N num de campos que tengo) pasos espaciaales_. Ver c'omo cambia en tiempo este numero
+	
+Hacer sin cargar el código, de forma que se coja desde el json. Para poder jugar con ellos. Ver q con el paso magico no hay error
+
+Roundung_test:
+	Para ver los errores de redondeo.
+	En vez de usarf SI para undiades utilizo sistema de unidades naturales para que tenga menos errores de redondeo.
+	Cojo mu0=eps0=1, c=1.
+	Esto solo lo hace dentro del solver, no en el json.

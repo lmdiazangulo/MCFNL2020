@@ -1,3 +1,4 @@
+
 import math
 import numpy as np
 import scipy.constants as sp
@@ -30,6 +31,7 @@ class Solver:
             box = self._mesh.snap(box)
             ids = self._mesh.toIds(box)
             Nx = abs(ids)
+
             p["mesh"] = {"origin": box[L], "steps": abs(box[U]-box[L]) / Nx}
             p["indices"] = ids
             p["time"]   = [0.0]
