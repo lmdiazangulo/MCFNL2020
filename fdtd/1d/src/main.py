@@ -11,7 +11,7 @@ from fdtd.comparison import AnalyticComp
 
 print("=== Python FDTD 1D")
 
-'''
+
 parser = argparse.ArgumentParser(description='Python FDTD 1D')
 parser.add_argument('-i', '--input', nargs=1, type=str)
 args = parser.parse_args()
@@ -23,7 +23,7 @@ inputFilename = ''.join(args.input).strip()
 print("--- Reading file: %s"%(inputFilename))
 data = json.load(open(inputFilename))
 
-'''
+
 
 print('--- Initializing mesh')
 mesh = Mesh(data["coordinates"], data["elements"], data["grid"])
