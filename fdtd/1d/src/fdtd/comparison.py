@@ -82,9 +82,9 @@ class AnalyticComp:
             SolReal=self.AnalyticalSol(self.gridE, self.probeTime)
         Animator( self.mesh, probe, analytical=SolReal)
         plt.figure()
-        plt.plot(self.gridE,probe["values"][50],label='Numerical')
-        plt.plot(self.gridE,SolReal[50],label='Analytic')
-        plt.legend()
+        #plt.plot(self.gridE,probe["values"][50],label='Numerical')
+        #plt.plot(self.gridE,SolReal[50],label='Analytic')
+        #plt.legend()
         return 
 
     def PrintErr(self,probe,err=None):
