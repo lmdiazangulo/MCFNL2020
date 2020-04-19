@@ -25,17 +25,22 @@
 
     "sources": [
         {
-            "type": "dipole", 
-            "direction": [0.0, 0.0, 1.0],
-            "magnitude": {
-                "type": "gaussian",
-                "gaussianDelay":  1.25e-9,
-                "gaussianSpread": 0.25e-9
-            },
+            "type": "none",
             "elemId": 1
         }
     ],
- 
+    "initialCond":[
+        {
+    
+            "type": "gaussian",
+            "gaussianSpread": 0.05,
+            "gaussianAmplitude": 0.5,
+            "peakPosition": 0.5
+        }
+    
+    ],
+    
+     
     "probes": [
         {
             "name": "s1",
