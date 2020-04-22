@@ -61,7 +61,7 @@ class Solver:
             ids = mesh.toIds(box)
             source["index"] = ids
 
-        self.old = Fields(e = values,
+        self.old = Fields(e = values.copy(),
                           h = np.zeros( mesh.pos.size-1 ) )
 
 
