@@ -25,6 +25,7 @@ class Mesh:
         return self.pos[1]-self.pos[0]  # Assumes everything is equispaced.
 
     def elemIdToBox(self, id):
+
         return ( self.coordinates[ self.elements[id][0] ], \
                  self.coordinates[ self.elements[id][1] ] )
 

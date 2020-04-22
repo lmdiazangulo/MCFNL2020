@@ -1,8 +1,10 @@
+
 import math
 import numpy as np
 import scipy.constants as sp
 import copy
 import time
+#import matplotlib.pyplot as plt
 
 L = 0 # Lower
 U = 1 # Upper
@@ -19,21 +21,39 @@ class Solver:
     
     _timeStepPrint = 100
 
-    def __init__(self, mesh, options, probes, sources):
+    def __init__(self, mesh, options, probes,sources, initialCond=[{"type": "none"}]):
         self.options = options
         
         self._mesh = copy.deepcopy(mesh)
-       
+        self._initialCond = copy.deepcopy(initialCond)
         self._probes = copy.deepcopy(probes)
         for p in self._probes:
             box = self._mesh.elemIdToBox(p["elemId"])
             box = self._mesh.snap(box)
             ids = self._mesh.toIds(box)
             Nx = abs(ids)
+
             p["mesh"] = {"origin": box[L], "steps": abs(box[U]-box[L]) / Nx}
             p["indices"] = ids
             p["time"]   = [0.0]
-            p["values"] = [np.zeros((1,Nx[1]))]
+            
+            for initial in self._initialCond:
+                if initial["type"]=="none":
+                    values=np.zeros( mesh.pos.size )
+                    p["values"] = [np.zeros((1,Nx[1]))]          
+                elif ( initial["type"] == "gaussian"):
+                    position=self._mesh.pos
+                    #print(source["index"])  #Lugar del pico
+                    values=Solver.movingGaussian(position, 0, \
+                       sp.speed_of_light,initial["peakPosition"],\
+                       initial["gaussianAmplitude"], \
+                       initial["gaussianSpread"] )  
+                    p["values"]= [values[ids[0]:ids[1]]]
+                        #plt.plot(position,eNew)
+                else:
+                    raise ValueError(\
+                    "Invalid initial condition type: " + initial["type"] )
+
 
         self._sources = copy.deepcopy(sources)
         for source in self._sources:
@@ -41,8 +61,9 @@ class Solver:
             ids = mesh.toIds(box)
             source["index"] = ids
 
-        self.old = Fields(e = np.zeros( mesh.pos.size ),
+        self.old = Fields(e = values.copy(),
                           h = np.zeros( mesh.pos.size-1 ) )
+
 
     def solve(self, finalTime):
         tic = time.time()
@@ -83,10 +104,20 @@ class Solver:
         eNew[1:-1] = e[1:-1] + cE * (h[1:] - h[:-1])
         
         # Boundary conditions
-        for bound in self._mesh.bounds:
-            if bound == "pec":
-                eNew[ 0] = 0.0
-                eNew[-1] = 0.0
+        for lu in range(2):
+            if lu == 0:
+                pos = 0
+            else:
+                pos = -1
+            if self._mesh.bounds[lu] == "pec":
+                eNew[pos] = 0.0
+            elif self._mesh.bounds[lu] == 'pmc':
+                eNew[pos] = e[pos] + 2*cE*(h[pos] if pos == 0 else -h[pos])
+            elif self._mesh.bounds[lu] == 'mur':
+                if pos == 0:
+                    eNew[0] =  e[ 1]+(sp.speed_of_light*dt-self._mesh.steps())* (eNew[ 1]-e[ 0]) / (sp.speed_of_light*dt+self._mesh.steps())
+                else:
+                    eNew[-1] = e[-2]+(sp.speed_of_light*dt-self._mesh.steps())* (eNew[-2]-e[ 1]) / (sp.speed_of_light*dt+self._mesh.steps())
             else:
                 raise ValueError("Unrecognized boundary type")
 
@@ -97,10 +128,13 @@ class Solver:
                 if magnitude["type"] == "gaussian":
                     eNew[source["index"]] += Solver._gaussian(t, \
                         magnitude["gaussianDelay"], \
-                        magnitude["gaussianSpread"] ) 
+                        magnitude["gaussianSpread"] )       
                 else:
                     raise ValueError(\
                     "Invalid source magnitude type: " + magnitude["type"])
+
+            elif source["type"] == "none":
+                continue
             else:
                 raise ValueError("Invalid source type: " + source["type"])
 
@@ -127,3 +161,6 @@ class Solver:
     @staticmethod
     def _gaussian(x, delay, spread):
         return np.exp( - ((x-delay)**2 / (2*spread**2)) )
+    
+    def movingGaussian(x,t,c,center,A,spread):
+        return A*np.exp(-(((x-center)-c*t)**2 /(2*spread**2)))
