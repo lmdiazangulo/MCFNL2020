@@ -1,0 +1,46 @@
+{
+    "format": "pyfdtd2d",
+    
+    "options": {
+        "finalTime": 3e-9,
+        "cfl": 1.0
+    },
+
+    "coordinates": [
+        [0.0, 0.0],
+        [1.0, 1.0],
+        [0.5, 0.5]
+    ],
+
+    "elements": [
+        [0, 1],
+        [2, 2]
+    ],
+
+    "grid": {   
+        "elemId": 0,
+        "steps": [0.025, 0.025],
+        "bounds": [
+            ["pec", "pec"],
+            ["pec", "pec"]
+        ]
+    },
+
+    "sources": [],
+    
+    "initialCond":[
+        {
+            "type": "gaussian",
+            "gaussianSpread": 0.05,
+            "gaussianAmplitude": 0.5,
+            "peakPosition": [0.5, 0.5]
+        }
+    ],
+
+    "probes": [
+        {
+            "name": "s1",
+            "elemId": 0
+        }
+    ]
+}
