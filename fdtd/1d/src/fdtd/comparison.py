@@ -81,7 +81,6 @@ class AnalyticComp:
         if SolReal is None:
             SolReal=self.AnalyticalSol(self.gridE, self.probeTime)
         Animator( self.mesh, probe, analytical=SolReal)
-        plt.figure()
         #plt.plot(self.gridE,probe["values"][50],label='Numerical')
         #plt.plot(self.gridE,SolReal[50],label='Analytic')
         #plt.legend()
@@ -94,4 +93,5 @@ class AnalyticComp:
         plt.plot(self.probeTime, err)
         plt.xlabel('t')
         plt.ylabel('$L^2 error$')
+        plt.show()
         return             
