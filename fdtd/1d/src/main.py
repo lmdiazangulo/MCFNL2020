@@ -37,15 +37,15 @@ solver.solve(data["options"]["finalTime"])
 print('--- Visualizing')
 #print(mesh)
 #print(solver.getProbes()[0])
-solNum=solver.getProbes()[0]
-Animator(mesh, solNum)
+# solNum=solver.getProbes()[0]
+Animator(mesh, solver.getProbes()[0])
 
 #%%
-print('--- Comparison with analytical solution')
-comparison=AnalyticComp(mesh, solNum, data["initialCond"])
-solReal=comparison.AnalyticalSol(comparison.gridE,comparison.probeTime)
-err=comparison.L2Error(solReal)
-comparison.AnimatorTogether(solNum,solReal)
-comparison.PrintErr(solNum,err)
+# print('--- Comparison with analytical solution')
+# comparison=AnalyticComp(mesh, solNum, data["initialCond"])
+# solReal=comparison.AnalyticalSol(comparison.gridE,comparison.probeTime)
+# err=comparison.L2Error(solReal)
+# comparison.AnimatorTogether(solNum,solReal)
+# comparison.PrintErr(solNum,err)
 
 print('=== Program finished')
