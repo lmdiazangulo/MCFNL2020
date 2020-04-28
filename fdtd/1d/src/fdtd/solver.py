@@ -33,7 +33,7 @@ class Solver:
             ids = self._mesh.toIds(box)
             Nx = abs(ids)
 
-            p["mesh"] = {"origin": box[L], "steps": abs(box[U]-box[L]) / Nx}
+            # p["mesh"] = {"origin": box[L], "steps": abs(box[U]-box[L]) / Nx}
             p["indices"] = ids
             p["time"]   = [0.0]
             
@@ -87,8 +87,8 @@ class Solver:
         
         print("    CPU Time: %f [s]" % (time.time() - tic))
 
-    def _dt(self):
-        return self.options["cfl"] * self._mesh.steps() / sp.speed_of_light  
+    def _dt(self): 
+        return self.options["cfl"] * min(self._mesh.steps()) / sp.speed_of_light 
 
     def timeStep(self):
         return self._dt()
@@ -97,13 +97,13 @@ class Solver:
         res = self._probes
         return res
 
-    def _updateE(self, t, dt):
+    def _updateE(self, t, dt): 
         (e, h) = self.old.get()
         eNew = np.zeros( self.old.e.shape )
-        cE = dt / sp.epsilon_0 / self._mesh.steps()
+        cE = dt / sp.epsilon_0 / self._mesh.hsteps()
         eNew[1:-1] = e[1:-1] + cE * (h[1:] - h[:-1])
         
-        # Boundary conditions
+        # Boundary conditions (probably needs modifying)
         for lu in range(2):
             if lu == 0:
                 pos = 0
@@ -140,7 +140,7 @@ class Solver:
 
         e[:] = eNew[:]
         
-    def _updateH(self, t, dt):      
+    def _updateH(self, t, dt):  #needs modifying 
         hNew = np.zeros( self.old.h.shape )
         (e, h) = self.old.get()
         cH = dt / sp.mu_0 / self._mesh.steps()
@@ -162,5 +162,6 @@ class Solver:
     def _gaussian(x, delay, spread):
         return np.exp( - ((x-delay)**2 / (2*spread**2)) )
     
+    @staticmethod
     def movingGaussian(x,t,c,center,A,spread):
         return A*np.exp(-(((x-center)-c*t)**2 /(2*spread**2)))
