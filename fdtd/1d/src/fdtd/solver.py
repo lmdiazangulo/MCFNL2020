@@ -97,7 +97,7 @@ class Solver:
         res = self._probes
         return res
 
-    def _updateE(self, t, dt): #needs modifying
+    def _updateE(self, t, dt): 
         (e, h) = self.old.get()
         eNew = np.zeros( self.old.e.shape )
         cE = dt / sp.epsilon_0 / self._mesh.hsteps()
