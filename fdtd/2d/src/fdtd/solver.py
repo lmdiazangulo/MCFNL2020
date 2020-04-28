@@ -1,77 +1,180 @@
-
 import math
 import numpy as np
 import scipy.constants as sp
 import copy
 import time
-#import matplotlib.pyplot as plt
+
+X = 0 # Cartesian indices
+Y = 1
 
 L = 0 # Lower
 U = 1 # Upper
 
-class Fields: 
-    def __init__(self, e, h):
-        self.e = e
-        self.h = h
-    
-    def get(self):
-        return (self.e, self.h)
+def gaussian(x, delay, spread):
+    return np.exp( - ((x-delay)**2 / (2*spread**2)) )
+
+def subsId(id):
+    if id is None:
+        return -1
+    else:
+        return id-1
 
 class Solver:
     
-    _timeStepPrint = 100
+    class Fields: 
+        def __init__(self, ex, ey, hz):
+            self.ex = ex
+            self.ey = ey
+            self.hz = hz
+        
+        def get(self):
+            return (self.ex, self.ey, self.hz)
 
-    def __init__(self, mesh, options, probes, sources=None, initialCond=None):
+    __timeStepPrint = 5000
+
+    def __init__(self, mesh, options, probes, sources):
         self.options = options
         
         self._mesh = copy.deepcopy(mesh)
-        self._initialCond = copy.deepcopy(initialCond)
+
         self._probes = copy.deepcopy(probes)
         for p in self._probes:
             box = self._mesh.elemIdToBox(p["elemId"])
-            ids = self._mesh.toIds(box)
-            Nxy = abs(ids)
-
+            box = self._mesh.snap(box)
+            ids = self._mesh.toIdx(box)
+            Nxy = abs(ids[Y] - ids[X])
             p["mesh"] = {"origin": box[L], "steps": abs(box[U]-box[L]) / Nxy}
             p["indices"] = ids
             p["time"]   = [0.0]
-            
-            for initial in self._initialCond:     
-                if initial["type"] == "gaussian":
-                    position=self._mesh.pos
-                    values=Solver.movingGaussian(position, 0, \
-                       sp.speed_of_light,initial["peakPosition"],\
-                       initial["gaussianAmplitude"], \
-                       initial["gaussianSpread"] )  
-                    p["values"]= [values[ids[0]:ids[1]]]
-                else:
-                    raise ValueError(\
-                    "Invalid initial condition type: " + initial["type"] )
+            p["values"] = [np.zeros((Nxy[X], Nxy[Y]))]
 
+        # for initial in self._initialCond:
+        #     if initial["type"] == "gaussian":
+        #         position=self._mesh.pos
+        #         values=Solver.movingGaussian(position, 0, \
+        #             sp.speed_of_light,initial["peakPosition"],\
+        #             initial["gaussianAmplitude"], \
+        #             initial["gaussianSpread"] )  
+        #         p["values"]= [values[ids[0]:ids[1]]]
+        #     else:
+        #         raise ValueError(\
+        #         "Invalid initial condition type: " + initial["type"] )
 
         self._sources = copy.deepcopy(sources)
         for source in self._sources:
             box = self._mesh.elemIdToBox(source["elemId"])
-            ids = mesh.toIds(box)
+            ids = mesh.toIdx(box)
             source["index"] = ids
+            
 
-        self.old = Fields(e = values.copy(),
-                          h = np.zeros( mesh.pos.size-1 ) )
+        self.old = self.Fields(
+            ex = np.zeros( (mesh.pos[X].size-1, mesh.pos[Y].size  ) ),
+            ey = np.zeros( (mesh.pos[X].size,   mesh.pos[Y].size-1) ),
+            hz = np.zeros( (mesh.pos[X].size-1, mesh.pos[Y].size-1) ) )
 
 
-    def solve(self, finalTime):
+    def _dt(self):
+        return self.options["cfl"] * min(self._mesh.steps()) / math.sqrt(2.0)  
+
+    def timeStep(self):
+        return self._dt() / sp.speed_of_light
+
+    def getProbes(self):
+        res = self._probes
+        return res
+
+    # ======================= UPDATE E =============================
+    def _updateE(self, t, dt, overFields = None):
+        eNew = (np.zeros( self.old.ex.shape ),
+                np.zeros( self.old.ey.shape ) )
+        (ex, ey, h) = self.old.get()
+        e = (ex, ey)
+
+        (dX, dY) = self._mesh.steps()
+        A = dX * dY
+        eNew[X][:,1:-1] = e[X][:,1:-1] + dt/A*dX * (h[:,1:] - h[:,:-1])
+        eNew[Y][1:-1,:] = e[Y][1:-1,:] - dt/A*dY * (h[1:,:] - h[:-1,:])
+
+        # Boundary conditions
+        for bound in self._mesh.bounds:
+            xy = bound.orientation()
+            (lx, ux) = (bound.arrayIdx(L,X), \
+                        bound.arrayIdx(U,X))
+            (ly, uy) = (bound.arrayIdx(L,Y), \
+                        bound.arrayIdx(U,Y))
+            if isinstance(bound, self._mesh.BoundPEC):
+                eNew[xy][lx:ux,ly:uy] = 0.0
+            else:
+                raise ValueError("Unrecognized boundary type")
+        
+        # Subgridding and updating
+        e[X][:] = eNew[X][:]
+        e[Y][:] = eNew[Y][:]  
+
+    # ======================= UPDATE H =============================
+    def _updateH(self, t, dt):      
+        hNew = np.zeros( self.old.hz.shape )
+        (ex, ey, h) = self.old.get()
+        
+        (dX, dY) = self._mesh.steps()
+        A = dX * dY
+              
+        hNew[:,:] = h[:,:] \
+                     - dt/A * dY * ey[1:,  :] \
+                     + dt/A * dX * ex[ :, 1:] \
+                     + dt/A * dY * ey[:-1,   :] \
+                     - dt/A * dX * ex[  :, :-1]
+        
+        # Source terms
+        for source in self._sources:
+            if source["type"] == "dipole":
+                magnitude = source["magnitude"]
+                if magnitude["type"] == "gaussian":
+                    c0 = sp.speed_of_light
+                    delay  = c0 * magnitude["gaussianDelay"]
+                    spread = c0 * magnitude["gaussianSpread"]
+                    id = source["index"]
+                    hNew[id[L][X]:id[U][X], id[L][Y]:id[U][Y]] += \
+                     gaussian(t, delay, spread)*dt
+                else:
+                    raise ValueError(\
+                    "Invalid source magnitude type: " + magnitude["type"])
+            else:
+                raise ValueError("Invalid source type: " + source["type"])
+        
+        h[:] = hNew[:]
+            
+    def _updateProbes(self, t):
+        for p in self._probes:
+            dimensionalTime = t/sp.speed_of_light
+            writeStep = "samplingPeriod" in p \
+                and (dimensionalTime/p["samplingPeriod"] >= len(p["time"]))
+            writeStep = writeStep or "samplingPeriod" not in p
+            if writeStep:
+                p["time"].append(dimensionalTime)
+                idx = p["indices"]
+                values = np.zeros(tuple(idx[U]-idx[L]))
+                values[:,:] = \
+                    self.old.hz[ idx[L][X]:idx[U][X], idx[L][Y]:idx[U][Y] ]
+                p["values"].append(values)
+
+    def solve(self, dimensionalFinalTime):
         tic = time.time()
         t = 0.0
         dt = self._dt()
-        numberOfTimeSteps = int(finalTime / dt)
+        numberOfTimeSteps = \
+            int(dimensionalFinalTime * sp.speed_of_light / dt)
         for n in range(numberOfTimeSteps):
-            self._updateE(t, dt)
+        
+            self._updateE(t, dt, self.old)
             t += dt/2.0
+
             self._updateH(t, dt)
             t += dt/2.0
+
             self._updateProbes(t)
     
-            if n % self._timeStepPrint == 0 or n+1 == numberOfTimeSteps:
+            if n % self.__timeStepPrint == 0 or n+1 == numberOfTimeSteps:
                 remaining = (time.time() - tic) * \
                     (numberOfTimeSteps-n) / (n+1)
                 min = math.floor(remaining / 60.0)
@@ -81,80 +184,6 @@ class Solver:
         
         print("    CPU Time: %f [s]" % (time.time() - tic))
 
-    def _dt(self):
-        return self.options["cfl"] * self._mesh.steps() / sp.speed_of_light  
-
-    def timeStep(self):
-        return self._dt()
-
-    def getProbes(self):
-        res = self._probes
-        return res
-
-    def _updateE(self, t, dt):
-        (e, h) = self.old.get()
-        eNew = np.zeros( self.old.e.shape )
-        cE = dt / sp.epsilon_0 / self._mesh.steps()
-        eNew[1:-1] = e[1:-1] + cE * (h[1:] - h[:-1])
-        
-        # Boundary conditions
-        for lu in range(2):
-            if lu == 0:
-                pos = 0
-            else:
-                pos = -1
-            if self._mesh.bounds[lu] == "pec":
-                eNew[pos] = 0.0
-            elif self._mesh.bounds[lu] == 'pmc':
-                eNew[pos] = e[pos] + 2*cE*(h[pos] if pos == 0 else -h[pos])
-            elif self._mesh.bounds[lu] == 'mur':
-                if pos == 0:
-                    eNew[0] =  e[ 1]+(sp.speed_of_light*dt-self._mesh.steps())* (eNew[ 1]-e[ 0]) / (sp.speed_of_light*dt+self._mesh.steps())
-                else:
-                    eNew[-1] = e[-2]+(sp.speed_of_light*dt-self._mesh.steps())* (eNew[-2]-e[ 1]) / (sp.speed_of_light*dt+self._mesh.steps())
-            else:
-                raise ValueError("Unrecognized boundary type")
-
-        # Source terms
-        for source in self._sources:
-            if source["type"] == "dipole":
-                magnitude = source["magnitude"]
-                if magnitude["type"] == "gaussian":
-                    eNew[source["index"]] += Solver._gaussian(t, \
-                        magnitude["gaussianDelay"], \
-                        magnitude["gaussianSpread"] )       
-                else:
-                    raise ValueError(\
-                    "Invalid source magnitude type: " + magnitude["type"])
-
-            elif source["type"] == "none":
-                continue
-            else:
-                raise ValueError("Invalid source type: " + source["type"])
-
-        e[:] = eNew[:]
-        
-    def _updateH(self, t, dt):      
-        hNew = np.zeros( self.old.h.shape )
-        (e, h) = self.old.get()
-        cH = dt / sp.mu_0 / self._mesh.steps()
-        hNew[:] = h[:] + cH * (e[1:] - e[:-1])
-        h[:] = hNew[:]
-            
-    def _updateProbes(self, t):
-        for p in self._probes:
-            if "samplingPeriod" not in p or \
-               "samplingPeriod" in p and \
-               (t/p["samplingPeriod"] >= len(p["time"])):
-                p["time"].append(t)
-                ids = p["indices"]
-                values = np.zeros(ids[U]-ids[L])
-                values[:] = self.old.e[ ids[0]:ids[1] ]
-                p["values"].append(values)
-
     @staticmethod
-    def _gaussian(x, delay, spread):
-        return np.exp( - ((x-delay)**2 / (2*spread**2)) )
-    
-    def movingGaussian(x,t,c,center,A,spread):
+    def movingGaussian(x,y,t,c,center,A,spread):
         return A*np.exp(-(((x-center)-c*t)**2 /(2*spread**2)))

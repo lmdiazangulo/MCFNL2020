@@ -4,10 +4,9 @@ import argparse
 import os.path
 import sys
 
+from fdtd.xdmf import Xdmf
 from fdtd.mesh import Mesh
 from fdtd.solver import Solver
-from fdtd.viewer import Animator
-from fdtd.comparison import AnalyticComp
 
 print("=== Python FDTD 2D")
 
@@ -27,13 +26,18 @@ print('--- Initializing mesh')
 mesh = Mesh(data["coordinates"], data["elements"], data["grid"])
 
 print('--- Initializing solver')
-solver = Solver(mesh, data["options"], data["probes"], data["sources"],data["initialCond"])
+solver = Solver(mesh, data["options"], data["probes"], data["sources"])
 
 print('--- Solving')
 solver.solve(data["options"]["finalTime"])
 
-print('--- Visualizing')
-solNum=solver.getProbes()[0]
-Animator(mesh, solNum)
+print('--- Writing output files')
+(folder, file) = os.path.split(inputFilename)
+caseName = os.path.splitext(file)[0]
+xdmf = Xdmf(basename = caseName, format = "XML")
+for p in solver.getProbes():
+    xdmf.add(p)
+
+open(xdmf.basename + ".xmf", "w+").write(xdmf.tostring().decode('utf-8'))
 
 print('=== Program finished')
