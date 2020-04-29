@@ -11,28 +11,29 @@ class Mesh:
         self.coordinates = coordinates
         self.elements = elements
         
+        _,pos = self.positions(grid[0])
+        for g in grid[1:]:
+            box, paux =
+            bottom = pos
+
+            pos = bottom + paux + top
+
+        self.bounds = grid[0]["bounds"]
+
+    def positions(self,grid):
         if "elemId" in grid:
             box = self.elemIdToBox(grid["elemId"])
         else:
             raise ValueError("Grid data must contain \"elemId\" or \"box\".")
-
         Lx = abs(box[U] - box[L])
-        if "type" not in grid or grid["type"] == "uniform":
-            dx = grid["steps"]
-            self.pos =  np.linspace(box[L], box[U], num=int(Lx/dx+1), endpoint=True)
-        elif grid["type"] == "custom":
-            self.pos = np.array([self.coordinates[el] for el in self.elements[grid["elemId"]]])
-        else:
-            raise ValueError("unknown grid type")
-
-        self.bounds = grid["bounds"]
+        dx = grid["steps"]
+        return  box, np.linspace(box[L], box[U], num=int(Lx/dx+1), endpoint=True)
 
     def steps(self):
-        return np.array([self.pos[i+1]-self.pos[i] for i in range(len(self.pos)-1)])  
+        return np.array(self.pos[1:]-self.pos[0:-1])  
 
     def hsteps(self):
-        steps = self.steps()
-        return np.array([0.5*(steps[i]+steps[i+1]) for i in range(len(steps)-1)])
+        return np.array(0.5*(self.steps()[0:-1]+self.steps()[1:]))
 
     def elemIdToBox(self, id):
 
