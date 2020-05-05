@@ -3,7 +3,7 @@ import matplotlib.animation as animation
 
 class Animator:
 
-    def __init__(self, mesh, probe,analytical=None):
+    def __init__(self, mesh, probe, analytical=None, fps=5):
             
         ids = probe["indices"]
         gridE = mesh.pos[ids[0]:ids[1]]
@@ -32,10 +32,10 @@ class Animator:
                 line1.set_data(gridE, analytical[i][:])
             timeText1.set_text('Time = %2.1f [ns]' % (probeTime[i]*1e9))
             return line1, timeText1
-            
+
         #print(probeTime)
         animation.FuncAnimation(fig, animate, init_func=init,
-            frames=len(probeTime), blit=True)
+            frames=len(probeTime), interval=1000/fps, blit=True)
 
         plt.show()
 
