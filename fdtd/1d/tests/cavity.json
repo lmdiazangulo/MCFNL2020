@@ -23,13 +23,11 @@
     ],
 
     "grid": [{   
-        "type": "main",
         "elemId": 0,
         "steps": 0.025,
         "bounds": ["mur", "mur"]
     },
     {   
-        "type": "main",
         "elemId": 2,
         "steps": 0.0125
     }
