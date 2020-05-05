@@ -14,10 +14,11 @@ class Mesh:
         bottom,pos = self.positions(grid[0])
         for g in grid[1:]:
             box, paux = self.positions(g)
-            #bottom = pos[0:
+            bottom = pos[pos < box[L]]
+            top = pos[pos > box[U]]
+            pos = np.concatenate([bottom,paux,top])
 
-            #self.pos = bottom + paux + top
-        self.pos= np.concatenate([pos[pos<box[0]],  paux ,  pos[pos>box[1]]]) #pos[0:self.snap(box[0])] + paux + pos[self.snap(box[1]):]
+        self.pos = pos
         self.bounds = grid[0]["bounds"]
 
         
