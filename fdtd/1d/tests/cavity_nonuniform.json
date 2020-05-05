@@ -25,8 +25,13 @@
     "grid": [{   
         "elemId": 0,
         "steps": 0.025,
-        "bounds": ["mur", "mur"]
+        "bounds": ["pec", "mur"]
+    },
+    {   
+        "elemId": 2,
+        "steps": 0.0125
     }
+
 ],
 
     "sources": [
