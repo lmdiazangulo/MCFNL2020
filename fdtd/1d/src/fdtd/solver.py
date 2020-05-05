@@ -112,12 +112,13 @@ class Solver:
             if self._mesh.bounds[lu] == "pec":
                 eNew[pos] = 0.0
             elif self._mesh.bounds[lu] == 'pmc':
-                eNew[pos] = e[pos] + 2*cE*(h[pos] if pos == 0 else -h[pos])
+                eNew[pos] = e[pos] + 2*cE[pos]*(h[pos] if pos == 0 else -h[pos])
             elif self._mesh.bounds[lu] == 'mur':
+                delta_x = self._mesh.hsteps()[pos]
                 if pos == 0:
-                    eNew[0] =  e[ 1]+(sp.speed_of_light*dt-self._mesh.steps())* (eNew[ 1]-e[ 0]) / (sp.speed_of_light*dt+self._mesh.steps())
+                    eNew[0] =  e[ 1]+(sp.speed_of_light*dt-delta_x)* (eNew[ 1]-e[ 0]) / (sp.speed_of_light*dt+delta_x)
                 else:
-                    eNew[-1] = e[-2]+(sp.speed_of_light*dt-self._mesh.steps())* (eNew[-2]-e[ 1]) / (sp.speed_of_light*dt+self._mesh.steps())
+                    eNew[-1] = e[-2]+(sp.speed_of_light*dt-delta_x)* (eNew[-2]-e[ 1]) / (sp.speed_of_light*dt+delta_x)
             else:
                 raise ValueError("Unrecognized boundary type")
 

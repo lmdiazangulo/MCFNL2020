@@ -10,26 +10,30 @@
         0.0,
         1.0,
         0.5,
-        0.2
+        0.2,
+        0.8
     ],
 
     "elements": [
         [0, 1],
         [2, 2],
-        [3,2]
+        [0, 3],
+        [3,2],
+        [4,1]
     ],
 
     "grid": [{   
         "type": "main",
         "elemId": 0,
         "steps": 0.025,
-        "bounds": ["pec", "pec"]
+        "bounds": ["mur", "mur"]
     },
     {   
-        "type": "objeto",
+        "type": "main",
         "elemId": 2,
         "steps": 0.0125
-    }],
+    }
+],
 
     "sources": [
         {
