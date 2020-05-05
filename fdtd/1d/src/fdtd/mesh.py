@@ -11,14 +11,16 @@ class Mesh:
         self.coordinates = coordinates
         self.elements = elements
         
-        _,pos = self.positions(grid[0])
+        bottom,pos = self.positions(grid[0])
         for g in grid[1:]:
-            box, paux =
-            bottom = pos
+            box, paux = self.positions(g)
+            #bottom = pos[0:
 
-            pos = bottom + paux + top
-
+            #self.pos = bottom + paux + top
+        self.pos= np.concatenate([pos[pos<box[0]],  paux ,  pos[pos>box[1]]]) #pos[0:self.snap(box[0])] + paux + pos[self.snap(box[1]):]
         self.bounds = grid[0]["bounds"]
+
+        
 
     def positions(self,grid):
         if "elemId" in grid:
