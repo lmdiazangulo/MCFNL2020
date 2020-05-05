@@ -11,13 +11,10 @@ class Mesh:
         self.coordinates = coordinates
         self.elements = elements
         
-        bottom,pos = self.positions(grid[0])
+        _,pos = self.positions(grid[0])
         for g in grid[1:]:
             box, paux = self.positions(g)
-            bottom = pos[pos < box[L]]
-            top = pos[pos > box[U]]
-            pos = np.concatenate([bottom,paux,top])
-
+            pos= np.concatenate([pos[pos<box[0]],  paux ,  pos[pos>box[1]]]) #pos[0:self.snap(box[0])] + paux + pos[self.snap(box[1]):]
         self.pos = pos
         self.bounds = grid[0]["bounds"]
 
@@ -30,7 +27,7 @@ class Mesh:
             raise ValueError("Grid data must contain \"elemId\" or \"box\".")
         Lx = abs(box[U] - box[L])
         dx = grid["steps"]
-        return  box, np.linspace(box[L], box[U], num=int(Lx/dx+1), endpoint=True)
+        return  box, np.linspace(box[L], box[U], num=int(round(Lx/dx+1)), endpoint=True)
 
     def steps(self):
         return np.array(self.pos[1:]-self.pos[0:-1])  
