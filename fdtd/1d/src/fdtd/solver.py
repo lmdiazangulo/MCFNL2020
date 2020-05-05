@@ -103,6 +103,7 @@ class Solver:
         cE = dt / sp.epsilon_0 / self._mesh.hsteps()
         eNew[1:-1] = e[1:-1] + cE * (h[1:] - h[:-1])
         
+<<<<<<< HEAD
         # Boundary conditions (probably needs modifying)
         for lu in range(2):
             if lu == 0:
@@ -118,6 +119,17 @@ class Solver:
                     eNew[0] =  e[ 1]+(sp.speed_of_light*dt-self._mesh.steps())* (eNew[ 1]-e[ 0]) / (sp.speed_of_light*dt+self._mesh.steps())
                 else:
                     eNew[-1] = e[-2]+(sp.speed_of_light*dt-self._mesh.steps())* (eNew[-2]-e[ 1]) / (sp.speed_of_light*dt+self._mesh.steps())
+=======
+        # Boundary conditions
+        for bound in self._mesh.bounds:
+            if bound == "pec":
+                eNew[ 0] = 0.0
+                eNew[-1] = 0.0
+            elif bound == 'pmc':
+                eNew[ 0] = e[0]-2*(cE)* (h[0])
+            elif bound == 'mur':
+                eNew[ 0] = e[ 1]+(sp.speed_of_light*dt-self._mesh.steps())* (eNew[ 1]-[ 0]) / (sp.speed_of_light*dt-self._mesh.steps())
+>>>>>>> 32729be2fe05194e1db91c0efb96e64f4c951133
             else:
                 raise ValueError("Unrecognized boundary type")
 
