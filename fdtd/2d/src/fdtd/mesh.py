@@ -77,9 +77,10 @@ class Mesh:
 
         (Lx, Ly) = abs(box[U] - box[L])
         (dx, dy) = grid["steps"]
+        self.delta=grid["steps"][0]
         self.pos =  \
-            (np.linspace(box[L][X], box[U][X], num=Lx/dx+1, endpoint=True),
-             np.linspace(box[L][Y], box[U][Y], num=Ly/dy+1, endpoint=True) )
+            (np.linspace(box[L][X], box[U][X], num=int(Lx/dx+1), endpoint=True),
+             np.linspace(box[L][Y], box[U][Y], num=int(Ly/dy+1), endpoint=True) )
 
         self.bounds = []
         if "bounds" in grid:
@@ -87,8 +88,8 @@ class Mesh:
                 for lu in range(len(grid["bounds"][xy])):
                     if grid["bounds"][xy][lu] == "pec":
                         self.bounds.append(Mesh.BoundPEC().idsAs(lu, xy))
-        
-                
+
+
     def steps(self):
         return (self.pos[X][1]-self.pos[X][0], self.pos[Y][1]-self.pos[Y][0])
 
@@ -109,6 +110,13 @@ class Mesh:
                        (np.abs(self.pos[Y] - coord[Y])).argmin())
             idx = np.vstack((idx, np.asarray(nearest).astype(int)))
         return idx
+    
+    # función que transforma longitud a número equivalente de índices
+    def toIdl(self, l):
+        dx = self.delta
+        lenght=int(l/(2*dx))
+        return lenght
+
 
     def snap(self, coords):
         res = []

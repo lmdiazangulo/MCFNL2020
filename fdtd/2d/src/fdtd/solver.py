@@ -11,13 +11,24 @@ L = 0 # Lower
 U = 1 # Upper
 
 def gaussian(x, delay, spread):
-    return np.exp( - ((x-delay)**2 / (2*spread**2)) )
+    return 4*np.exp( - ((x-delay)**2 / (2*spread**2)) )
+
+def sinusoidal(t,amplitude,omega):
+    return amplitude*np.sin(omega*t)
 
 def subsId(id):
     if id is None:
         return -1
     else:
         return id-1
+
+def isinring(x, y, rin, rout, cent):
+    r=np.sqrt((float(x)-float(cent[0]))**2.0+(float(y)-float(cent[1]))**2)
+    return (r>=rin and r<rout)
+
+# Esto lo tengo que terminar, cuando esté hecho te lo volveré a mandar el solver
+#def isinrectangle(x, y, h, b, cent):
+#    return ((x-cent[0])<-b/2 and (x-cent[0])<-b/2
 
 class Solver:
     
@@ -32,9 +43,8 @@ class Solver:
 
     __timeStepPrint = 5000
 
-    def __init__(self, mesh, options, probes, sources):
+    def __init__(self, mesh, options, probes, sources, material):
         self.options = options
-        
         self._mesh = copy.deepcopy(mesh)
 
         self._probes = copy.deepcopy(probes)
@@ -48,18 +58,6 @@ class Solver:
             p["time"]   = [0.0]
             p["values"] = [np.zeros((Nxy[X], Nxy[Y]))]
 
-        # for initial in self._initialCond:
-        #     if initial["type"] == "gaussian":
-        #         position=self._mesh.pos
-        #         values=Solver.movingGaussian(position, 0, \
-        #             sp.speed_of_light,initial["peakPosition"],\
-        #             initial["gaussianAmplitude"], \
-        #             initial["gaussianSpread"] )  
-        #         p["values"]= [values[ids[0]:ids[1]]]
-        #     else:
-        #         raise ValueError(\
-        #         "Invalid initial condition type: " + initial["type"] )
-
         self._sources = copy.deepcopy(sources)
         for source in self._sources:
             box = self._mesh.elemIdToBox(source["elemId"])
@@ -71,8 +69,28 @@ class Solver:
             ex = np.zeros( (mesh.pos[X].size-1, mesh.pos[Y].size  ) ),
             ey = np.zeros( (mesh.pos[X].size,   mesh.pos[Y].size-1) ),
             hz = np.zeros( (mesh.pos[X].size-1, mesh.pos[Y].size-1) ) )
+        
+        # definimos la matriz de propiedades
+        self.mate = [(np.ones((mesh.pos[X].size, mesh.pos[Y].size))),
+            (np.ones((mesh.pos[X].size, mesh.pos[Y].size)))]
+        # determinamos las coordenadas del centro
+        cent=self._mesh.elemIdToBox(material["elemId"])
+        idc=mesh.toIdx(cent)
+        for i in range(mesh.pos[X].size):
+            for j in range(mesh.pos[Y].size):
+                if "shape" in material:
+                    if material["shape"] == "ring":
+                        # determinamos los valores Rin y Rout
+                        Ri=self._mesh.toIdl(material["Rin"])
+                        Ro=self._mesh.toIdl(material["Rout"])
+                        if isinring(float(i), float(j), Ri, Ro, idc[0]):
+                            self.mate[0][i,j]=material["mu"]
+                            self.mate[1][i,j]=material["epsilon"]
+                    #elif material["type"] == "rectangle"
 
-
+    def getproperties(self):
+        return self.mate
+    
     def _dt(self):
         return self.options["cfl"] * min(self._mesh.steps()) / math.sqrt(2.0)  
 
@@ -118,12 +136,13 @@ class Solver:
         
         (dX, dY) = self._mesh.steps()
         A = dX * dY
+        prop=self.getproperties()
               
         hNew[:,:] = h[:,:] \
-                     - dt/A * dY * ey[1:,  :] \
-                     + dt/A * dX * ex[ :, 1:] \
-                     + dt/A * dY * ey[:-1,   :] \
-                     - dt/A * dX * ex[  :, :-1]
+                     - (dt/A * dY / prop[0][1:,1:]) * ey[1:,  :] \
+                     + (dt/A * dX / prop[0][1:,1:]) * ex[ :, 1:] \
+                     + (dt/A * dY / prop[0][1:,1:]) * ey[:-1,   :] \
+                     - (dt/A * dX / prop[0][1:,1:]) * ex[  :, :-1]
         
         # Source terms
         for source in self._sources:
@@ -135,10 +154,23 @@ class Solver:
                     spread = c0 * magnitude["gaussianSpread"]
                     id = source["index"]
                     hNew[id[L][X]:id[U][X], id[L][Y]:id[U][Y]] += \
-                     gaussian(t, delay, spread)*dt
+                        gaussian(t, delay, spread)*dt
                 else:
                     raise ValueError(\
                     "Invalid source magnitude type: " + magnitude["type"])
+
+            elif source["type"] == "planewave":
+                magnitude = source["magnitude"]
+                if magnitude["type"] == "sinusoidal":
+                    amplitude = magnitude["sinAmplitude"]
+                    omega = magnitude["sinFreq"]
+                    id = source["index"]
+                    hNew[id[L][X]:id[U][X], id[L][Y]:id[U][Y]] += \
+                    amplitude*np.sin(omega*t)
+                else:
+                    raise ValueError(\
+                    "Invalid source magnitude type: " + magnitude["type"])
+                    
             else:
                 raise ValueError("Invalid source type: " + source["type"])
         
