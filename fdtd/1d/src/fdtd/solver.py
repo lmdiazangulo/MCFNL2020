@@ -61,7 +61,7 @@ class Solver:
             ids = mesh.toIds(box)
             source["index"] = ids
 
-        self.old = Fields(e = values,
+        self.old = Fields(e = values.copy(),
                           h = np.zeros( mesh.pos.size-1 ) )
 
 
@@ -111,6 +111,8 @@ class Solver:
                 pos = -1
             if self._mesh.bounds[lu] == "pec":
                 eNew[pos] = 0.0
+            elif self._mesh.bounds[lu] == 'pmc':
+                eNew[pos] = e[pos] + 2*cE*(h[pos] if pos == 0 else -h[pos])
             elif self._mesh.bounds[lu] == 'mur':
                 if pos == 0:
                     eNew[0] =  e[ 1]+(sp.speed_of_light*dt-self._mesh.steps())* (eNew[ 1]-e[ 0]) / (sp.speed_of_light*dt+self._mesh.steps())
