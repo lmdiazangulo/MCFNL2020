@@ -26,9 +26,13 @@ def isinring(x, y, rin, rout, cent):
     r=np.sqrt((float(x)-float(cent[0]))**2.0+(float(y)-float(cent[1]))**2)
     return (r>=rin and r<rout)
 
-# Esto lo tengo que terminar, cuando esté hecho te lo volveré a mandar el solver
-#def isinrectangle(x, y, h, b, cent):
-#    return ((x-cent[0])<-b/2 and (x-cent[0])<-b/2
+def isindiamond(x, y, d, cent):
+    return (abs(float(x)-float(cent[0])) + abs(float(y)- float(cent[1])))<d
+
+def isinrectangle(x, y, h, b, cent):
+    return (abs(x-cent[0])<=b/2 and abs(y-cent[1])<=h/2)
+
+
 
 class Solver:
     
@@ -46,6 +50,7 @@ class Solver:
     def __init__(self, mesh, options, probes, sources, material):
         self.options = options
         self._mesh = copy.deepcopy(mesh)
+        self._material = copy.deepcopy(material)
 
         self._probes = copy.deepcopy(probes)
         for p in self._probes:
@@ -86,10 +91,25 @@ class Solver:
                         if isinring(float(i), float(j), Ri, Ro, idc[0]):
                             self.mate[0][i,j]=material["mu"]
                             self.mate[1][i,j]=material["epsilon"]
-                    #elif material["type"] == "rectangle"
+                    elif material["shape"] == "rectangle":
+                        Base = self._mesh.toIdl(material["base"])
+                        Height = self._mesh.toIdl(material["height"])
+                        if isinrectangle(float(i), float(j), Height, Base, idc[0]):
+                            self.mate[0][i,j]=material["mu"]
+                            self.mate[1][i,j]=material["epsilon"]
+                    elif material["shape"] == "diamond":
+                        diag = self._mesh.toIdl(material["diagonal"])
+                        if isindiamond(float(i), float(j), diag, idc[0]):
+                            self.mate[0][i,j]=material["mu"]
+                            self.mate[1][i,j]=material["epsilon"]
+
+
 
     def getproperties(self):
         return self.mate
+
+    def getmaterial(self):
+       return self._material
     
     def _dt(self):
         return self.options["cfl"] * min(self._mesh.steps()) / math.sqrt(2.0)  
@@ -110,6 +130,9 @@ class Solver:
 
         (dX, dY) = self._mesh.steps()
         A = dX * dY
+        prop=self.getproperties()
+        material = self.getmaterial()
+
         eNew[X][:,1:-1] = e[X][:,1:-1] + dt/A*dX * (h[:,1:] - h[:,:-1])
         eNew[Y][1:-1,:] = e[Y][1:-1,:] - dt/A*dY * (h[1:,:] - h[:-1,:])
 
@@ -124,6 +147,14 @@ class Solver:
                 eNew[xy][lx:ux,ly:uy] = 0.0
             else:
                 raise ValueError("Unrecognized boundary type")
+             # ----- PEC (?) ---------
+            if material["boundary"] == "pec":
+                for i in range(prop[0][1:,1].size):
+                    for j in range(prop[0][1,1:].size):
+                        if prop[0][i,j] != 1:
+                            eNew[X][i,j] = 0
+                            eNew[Y][i,j] = 0
+
         
         # Subgridding and updating
         e[X][:] = eNew[X][:]
@@ -137,6 +168,7 @@ class Solver:
         (dX, dY) = self._mesh.steps()
         A = dX * dY
         prop=self.getproperties()
+        #material = self.getmaterial()
               
         hNew[:,:] = h[:,:] \
                      - (dt/A * dY / prop[0][1:,1:]) * ey[1:,  :] \
@@ -173,7 +205,7 @@ class Solver:
                     
             else:
                 raise ValueError("Invalid source type: " + source["type"])
-        
+
         h[:] = hNew[:]
             
     def _updateProbes(self, t):

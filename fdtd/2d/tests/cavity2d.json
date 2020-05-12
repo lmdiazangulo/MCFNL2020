@@ -37,14 +37,18 @@
         "elemId": 4,
         "shape": "ring",
 
-        "Rin": 0.6,
-        "Rout": 1.0,
+        "Rin": 0.7,
+        "Rout": 1.5,
 
-        "base": 0.25,
-        "height": 0.25,
+        "base": 3.5,
+        "height": 2,
+
+        "diagonal": 2,
 
         "mu": 8.0,
-        "epsilon": 8.0
+        "epsilon": 8.0,
+
+        "boundary": "no_pec"
     },
 
     "sources": [
@@ -66,7 +70,8 @@
     "probes": [
         {
             "name": "s1",
-            "elemId": 1
+            "elemId": 1,
+            "samplingPeriod": 1e-10
         }
     ]
 }
