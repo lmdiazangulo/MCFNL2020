@@ -12,7 +12,7 @@ from fdtd.dispersiveMedia import DispersiveMedia
 from measure.Transmittance import MeasureTransmittance, AnalyticTransmittance, PlotTransmittance
 print("=== Python FDTD 1D")
 
-'''
+
 parser = argparse.ArgumentParser(description='Python FDTD 1D')
 parser.add_argument('-i', '--input', nargs=1, type=str)
 args = parser.parse_args()0
@@ -21,8 +21,7 @@ if len(sys.argv) == 1:
     sys.exit()
 
 inputFilename = ''.join(args.input).strip()
-'''
-inputFilename='..\\tests\\cavity_dispersive_test_NoComplex.json'
+
 print("--- Reading file: %s"%(inputFilename))
 data = json.load(open(inputFilename))
 
@@ -65,13 +64,3 @@ PlotTransmittance(freq, [np.abs(transReal),np.abs(reflecReal)],labels=['T','R'])
 Animator(mesh, solNum,layer=layer,dispAndFree=True, fps=100)
 input("Press [enter] to finish.")
 #%%
-'''
-print('--- Comparison with analytical solution')
-comparison=AnalyticComp(mesh, solNum, data["initialCond"])
-solReal=comparison.AnalyticalSol(comparison.gridE,comparison.probeTime)
-err=comparison.L2Error(solReal)
-comparison.AnimatorTogether(solNum,solReal)
-comparison.PrintErr(solNum,err)
-
-print('=== Program finished')
-'''
