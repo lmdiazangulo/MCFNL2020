@@ -1,0 +1,71 @@
+{
+    "format": "pyfdtd1d",
+    
+    "options": {
+        "finalTime": 20e-19,
+        "timeUnits": "s",
+        "cfl": 1
+    },
+
+    "coordinates": [
+        0.0,
+        1e-9,
+        0.3e-9
+    ],
+
+    "elements": [
+        [0, 1],
+        [2, 2]
+    ],
+
+    "grid": {   
+        "elemId": 0,
+        "steps": 0.0001e-9,
+        "bounds": ["mur", "mur"]
+    },
+
+    "sources": [
+        {
+            "type": "dipole", 
+            "direction": [0.0, 0.0, 1.0],
+            "magnitude": {
+                "type": "gaussian",
+                "gaussianDelay":  1.25e-19,
+                "gaussianSpread": 0.25e-19
+            },
+            "elemId": 1
+        }
+    ],
+    "dispersiveLayers": 
+        {
+            "permittivity": 1.5,
+            "permeability":1,
+            "ap": [
+                "-2.502e-2-8.626e-3j",
+                "-2.021e-1-9.407e-1j",
+                "-1.467e1-1.338j",
+                "-2.997e-1-4.034j",
+                "-1.896-4.808j",
+                "-9.396-6.477j"
+            ],
+            "cp": [
+                "5.987e-1+4.195e3j",
+                "-2.211e-1+2.680e-1j",
+                "-4.240+7.342e2j",
+                "6.391e-1-7.186e-2j",
+                "1.806+4.563j",
+                "1.443-8.219e1j"
+            ],
+            "unitsFreq": "eV",
+            "startPosition": 0.4e-9,
+            "width":  0.5e-9
+        },
+
+    "probes": [
+        {
+            "name": "s1",
+            "elemId": 0,
+            "__samplingPeriod": 0.1e-9
+        }
+    ]
+}

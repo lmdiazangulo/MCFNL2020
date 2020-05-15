@@ -9,29 +9,28 @@
     "coordinates": [
         0.0,
         1.0,
-        0.5,
-        0.2,
-        0.8
+        0.5
     ],
 
     "elements": [
         [0, 1],
-        [2, 2],
-        [0, 3],
-        [3,2],
-        [4,1]
+        [2, 2]
     ],
 
-    "grid": [{   
+    "grid": {   
         "elemId": 0,
         "steps": 0.025,
         "bounds": ["mur", "mur"]
-    }
-],
-
+    },
     "sources": [
         {
-            "type": "none",
+            "type": "dipole", 
+            "direction": [0.0, 0.0, 1.0],
+            "magnitude": {
+                "type": "gaussian",
+                "gaussianDelay":  1.25e-9,
+                "gaussianSpread": 0.25e-9
+            },
             "elemId": 1
         }
     ],
