@@ -104,10 +104,12 @@ class AnalyticTransmittance:
         return phi[0,0]*self._eta_0 + phi[0,1] + phi[1,0]*self._eta_0**2 + phi[1,1]*self._eta_0
         
     def T(self, omega):
+        omega=omega*2*np.pi   #Change freq in Hz to rad/s
         sol = 2*self._eta_0 / self._den(omega)
         return  sol
 
     def R(self, omega): 
+        omega=omega*2*np.pi   #Change freq in Hz to rad/s
         phi = self.phi(omega)
         return \
             (phi[0,0]*self._eta_0 + phi[0,1] - phi[1,0]*self._eta_0**2 - phi[1,1]*self._eta_0) / \
@@ -131,6 +133,7 @@ class PlotTransmittance:
             plt.plot(freq[freq>=0], element,label=setLabel)
         plt.xlabel('Frequency [Hz]')
         plt.ylabel('Ratio')
+        plt.xscale('log')
        # plt.ylim(-0.5,1.5)
         plt.legend()
         plt.ion()

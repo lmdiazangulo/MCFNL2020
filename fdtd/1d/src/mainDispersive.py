@@ -15,7 +15,7 @@ print("=== Python FDTD 1D")
 
 parser = argparse.ArgumentParser(description='Python FDTD 1D')
 parser.add_argument('-i', '--input', nargs=1, type=str)
-args = parser.parse_args()0
+args = parser.parse_args()
 if len(sys.argv) == 1:
     parser.print_help()
     sys.exit()
